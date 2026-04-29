@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Myth Engine — Evolved</title>
+<style>
+:root{--bg:#070707;--panel:#111;--ink:#eee;--muted:#aaa;--line:#333;--accent:#d8b35a;--danger:#b84a4a;--green:#67b56a;}
+*{box-sizing:border-box} body{margin:0;background:radial-gradient(circle at top,#1a1712,#070707 45%);color:var(--ink);font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;line-height:1.45}
+header{padding:30px 20px;border-bottom:1px solid var(--line);position:sticky;top:0;background:rgba(7,7,7,.88);backdrop-filter:blur(10px);z-index:10}
+h1{margin:0;font-size:clamp(28px,5vw,52px);letter-spacing:.08em} .subtitle{color:var(--muted);max-width:900px;margin-top:10px}.wrap{max-width:1150px;margin:0 auto;padding:20px}.grid{display:grid;grid-template-columns:1.1fr .9fr;gap:18px}@media(max-width:850px){.grid{grid-template-columns:1fr}}
+.card{background:linear-gradient(180deg,#141414,#0d0d0d);border:1px solid var(--line);border-radius:18px;padding:18px;box-shadow:0 10px 35px rgba(0,0,0,.35)}
+label{display:block;color:var(--accent);font-size:13px;letter-spacing:.08em;text-transform:uppercase;margin-bottom:8px} textarea,input,select{width:100%;background:#060606;color:var(--ink);border:1px solid #444;border-radius:12px;padding:12px;font:inherit} textarea{min-height:115px;resize:vertical}.row{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}button{background:#1d1d1d;color:var(--ink);border:1px solid #444;border-radius:999px;padding:10px 14px;font:inherit;cursor:pointer}button:hover{border-color:var(--accent);color:#fff}button.primary{background:var(--accent);color:#090909;border-color:var(--accent);font-weight:800}.danger{border-color:var(--danger);color:#ffb3b3}.output{white-space:pre-wrap;background:#080808;border:1px solid #292929;border-radius:14px;padding:14px;min-height:70px}.badge{display:inline-block;border:1px solid #444;border-radius:999px;padding:4px 9px;color:var(--muted);font-size:12px;margin:2px}.section-title{display:flex;align-items:center;justify-content:space-between;gap:10px}.archive-item{border-left:3px solid var(--accent);padding:12px;margin:12px 0;background:#0a0a0a;border-radius:0 12px 12px 0}.small{font-size:12px;color:var(--muted)}.glitch{animation:glitch 1.7s infinite}@keyframes glitch{0%,100%{text-shadow:none}20%{text-shadow:2px 0 #a22,-2px 0 #2aa}40%{text-shadow:-2px 0 #a22,2px 0 #2aa}60%{text-shadow:1px 0 #d8b35a}}.clean body{} .hidden{display:none}.pillbar{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}.stage{margin-bottom:14px}.stage h3{margin:0 0 8px 0;color:var(--accent);font-size:15px;text-transform:uppercase;letter-spacing:.08em}.footer{color:#777;text-align:center;padding:40px 10px}
+</style>
+</head>
+<body>
+<header>
+<div class="wrap">
+<h1 id="title">MYTH ENGINE</h1>
+<div class="subtitle">Input → Pressure → Opposite → Decision → Plate → Artifact → Archive. A living Codex interface for turning raw thought into usable myth.</div>
+<div class="pillbar"><span class="badge">Red Loop</span><span class="badge">Pressure Test</span><span class="badge">Local Archive</span><span class="badge">Glitch / Clean Toggle</span></div>
+</div>
+</header>
+<main class="wrap grid">
+<section class="card">
+<label for="idea">Raw Idea</label>
+<textarea id="idea" placeholder="Drop the raw thought here..."></textarea>
+<div class="row">
+<select id="mode">
+<option value="mythic">Mythic</option><option value="brutal">Brutal Critique</option><option value="clean">Clean Philosophical</option><option value="image">Image/Artifact Ready</option>
+</select>
+<input id="tag" placeholder="Tag: time, motive, painting, observer..." />
+</div>
+<div class="row"><button class="primary" onclick="runEngine()">Run Engine</button><button onclick="saveCurrent()">Save to Codex</button><button onclick="randomSeed()">Random Seed</button><button onclick="toggleGlitch()">Toggle Glitch</button></div>
+</section>
+<section class="card">
+<div class="section-title"><label>Decision Gate</label><span class="small">Pick one before saving.</span></div>
+<div class="row"><button onclick="setDecision('KEEP')">Keep</button><button onclick="setDecision('REJECT')">Reject</button><button onclick="setDecision('HOLD TENSION')">Hold Tension</button></div>
+<div id="decisionBox" class="output">No decision yet.</div>
+</section>
+<section class="card">
+<div class="stage"><h3>1. Pressure</h3><div id="pressure" class="output">Run the engine.</div></div>
+<div class="stage"><h3>2. Red Loop / Opposite</h3><div id="opposite" class="output">Run the engine.</div></div>
+<div class="stage"><h3>3. Refined Plate</h3><div id="plate" class="output">Run the engine.</div></div>
+</section>
+<section class="card">
+<div class="stage"><h3>4. Artifact</h3><div id="artifact" class="output">Run the engine.</div></div>
+<div class="stage"><h3>5. Engine Verdict</h3><div id="verdict" class="output">Run the engine.</div></div>
+</section>
+<section class="card" style="grid-column:1/-1">
+<div class="section-title"><label>Codex Archive</label><div class="row"><button onclick="exportArchive()">Export JSON</button><button class="danger" onclick="clearArchive()">Clear Archive</button></div></div>
+<div id="archive"></div>
+</section>
+</main>
+<div class="footer">Myth Engine v2 — built to fight the idea until it becomes useful.</div>
+<script>
+let current=null; let decision='';
+const pressureBank=[
+'What breaks if this is false?','What are you assuming without proving?','Where does this fail in real life?','What is the smallest blade-of-grass version?','What is the opposite trying to protect?','What part sounds deep but is actually vague?','What would make this dangerous if believed too hard?','What behavior would this require from humans?'
+];
+const seeds=['A man cannot stay inside a moment long enough for meaning to form.','A house has two winds and one still person.','A painting becomes real only when the darks commit.','A voice becomes a face only if the painter lets it.','The observer sees everything and belongs nowhere.','Meaning is not found; it is reflected.'];
+function esc(s){return (s||'').replace(/[&<>]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[m]));}
+function makeOpposite(input){
+ const starters=['Opposite: ','Counterforce: ','Red Loop: '];
+ let lower=input.toLowerCase();
+ if(lower.includes('can\'t')||lower.includes('cannot')) return 'Opposite: It can be understood, but only through the right frame.';
+ if(lower.includes('meaning')) return 'Opposite: Meaning is not needed; function is enough.';
+ if(lower.includes('time')) return 'Opposite: Time is not broken; perception is misaligned.';
+ if(lower.includes('control')) return 'Opposite: Control is an illusion; consistency is the real power.';
+ if(lower.includes('painting')) return 'Opposite: The painting does not need more commitment; it needs restraint.';
+ return starters[Math.floor(Math.random()*starters.length)]+'If this idea is true, its opposite is also hiding a truth.';
+}
+function titleFrom(input){let words=input.replace(/[^a-zA-Z0-9\s]/g,'').split(/\s+/).filter(Boolean); let key=words.slice(0,3).join(' ')||'Untitled Signal'; return key.toUpperCase();}
+function runEngine(){
+ const input=document.getElementById('idea').value.trim(); if(!input){alert('Feed the engine first.');return;}
+ const mode=document.getElementById('mode').value; const tag=document.getElementById('tag').value.trim()||'untagged';
+ const qs=[...pressureBank].sort(()=>Math.random()-.5).slice(0,3);
+ const opposite=makeOpposite(input);
+ const title='Plate Ω-'+titleFrom(input);
+ const tone={mythic:'It entered raw.\nIt met resistance.\nIt changed shape.\nNow it asks to remain.',brutal:'This survives only if it stops hiding behind vagueness. Commit, cut, or abandon it.',clean:'The idea becomes useful when its assumptions, limits, and counterforce are visible.',image:'Location + Entity + Law + Breach + Artifact + Consequence. One breach only.'}[mode];
+ const plate=`${title}\n\n${input}\n\n${tone}\n\nInscription:\nWhat survives pressure earns a name.`;
+ const artifact=`Artifact Seed:\n• Symbol: ${symbolFor(input)}\n• Visual Law: ${visualLaw(input)}\n• Failure Mode: ${failureMode(input)}\n• Use: Turn into plate, scene, painting, or interface element.`;
+ const verdict=`Engine Verdict:\nThis idea is ${input.length>80?'dense enough to refine':'small enough to sharpen'}. Its danger is ${dangerFor(input)}. Its next move is a decision.`;
+ document.getElementById('pressure').innerText=qs.map((q,i)=>(i+1)+'. '+q).join('\n');
+ document.getElementById('opposite').innerText=opposite;
+ document.getElementById('plate').innerText=plate;
+ document.getElementById('artifact').innerText=artifact;
+ document.getElementById('verdict').innerText=verdict;
+ current={input,tag,mode,pressure:qs,opposite,plate,artifact,verdict,decision:'',date:new Date().toISOString()};
+ decision=''; document.getElementById('decisionBox').innerText='No decision yet.';
+}
+function symbolFor(s){s=s.toLowerCase(); if(s.includes('time'))return 'broken clock / split ring'; if(s.includes('painting'))return 'black mouth with bright edge'; if(s.includes('voice'))return 'mouth behind glass'; if(s.includes('observer'))return 'eye above empty chair'; return 'forked mark';}
+function visualLaw(s){if(s.toLowerCase().includes('meaning'))return 'meaning appears only after pressure'; if(s.toLowerCase().includes('time'))return 'sequence fractures before memory forms'; return 'the form changes when watched';}
+function failureMode(s){if(s.length<40)return 'too vague unless expanded'; return 'too heavy unless simplified';}
+function dangerFor(s){if(s.toLowerCase().includes('everything')||s.toLowerCase().includes('always'))return 'absolutism'; if(s.toLowerCase().includes('meaning'))return 'over-interpretation'; return 'soft commitment';}
+function setDecision(d){decision=d; document.getElementById('decisionBox').innerText='Decision: '+d; if(current) current.decision=d;}
+function saveCurrent(){if(!current){alert('Run the engine first.');return;} if(!current.decision){alert('Choose Keep / Reject / Hold Tension first.');return;} let arr=JSON.parse(localStorage.getItem('mythEngineArchive')||'[]'); arr.unshift(current); localStorage.setItem('mythEngineArchive',JSON.stringify(arr)); renderArchive();}
+function renderArchive(){let arr=JSON.parse(localStorage.getItem('mythEngineArchive')||'[]'); let el=document.getElementById('archive'); if(!arr.length){el.innerHTML='<div class="small">No saved plates yet.</div>';return;} el.innerHTML=arr.map((x,i)=>`<div class="archive-item"><div class="small">${new Date(x.date).toLocaleString()} · ${esc(x.tag)} · ${esc(x.decision)}</div><strong>${esc(x.plate.split('\n')[0])}</strong><pre>${esc(x.plate)}</pre><div class="small">${esc(x.opposite)}</div></div>`).join('');}
+function clearArchive(){if(confirm('Clear local archive?')){localStorage.removeItem('mythEngineArchive');renderArchive();}}
+function exportArchive(){let data=localStorage.getItem('mythEngineArchive')||'[]'; let blob=new Blob([data],{type:'application/json'}); let a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='myth_engine_archive.json'; a.click();}
+function randomSeed(){document.getElementById('idea').value=seeds[Math.floor(Math.random()*seeds.length)];}
+function toggleGlitch(){document.getElementById('title').classList.toggle('glitch'); document.body.classList.toggle('glitch');}
+renderArchive();
+</script>
+</body>
+</html>
